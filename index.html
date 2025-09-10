@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Gambling Leaderboard</title>
+    <title>Demisux'sGambling Leaderboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="fullsize.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -415,97 +415,8 @@
                         <th>Prize</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr>
-                        <td class="rank">#1</td>
-                        <td>CryptoKing2024</td>
-                        <td>$125,450</td>
-                        <td class="prize">$4,500</td>
-                    </tr>
-                    <tr>
-                        <td class="rank">#2</td>
-                        <td>DiamondHands88</td>
-                        <td>$98,320</td>
-                        <td class="prize">$2,000</td>
-                    </tr>
-                    <tr>
-                        <td class="rank">#3</td>
-                        <td>LuckyStrike777</td>
-                        <td>$87,650</td>
-                        <td class="prize">$1,000</td>
-                    </tr>
-                    <tr>
-                        <td class="rank">#4</td>
-                        <td>MoonShot_Pro</td>
-                        <td>$76,890</td>
-                        <td class="prize">$500</td>
-                    </tr>
-                    <tr>
-                        <td class="rank">#5</td>
-                        <td>HighRoller_VIP</td>
-                        <td>$65,230</td>
-                        <td class="prize">$400</td>
-                    </tr>
-                    <tr>
-                        <td class="rank">#6</td>
-                        <td>GoldenBet_Master</td>
-                        <td>$58,740</td>
-                        <td class="prize">$300</td>
-                    </tr>
-                    <tr>
-                        <td class="rank">#7</td>
-                        <td>RiskTaker_Elite</td>
-                        <td>$52,180</td>
-                        <td class="prize">$200</td>
-                    </tr>
-                    <tr>
-                        <td class="rank">#8</td>
-                        <td>SlotMachine_God</td>
-                        <td>$47,920</td>
-                        <td class="prize">$200</td>
-                    </tr>
-                    <tr>
-                        <td class="rank">#9</td>
-                        <td>BigBet_Champion</td>
-                        <td>$43,560</td>
-                        <td class="prize">$200</td>
-                    </tr>
-                    <tr>
-                        <td class="rank">#10</td>
-                        <td>WagerWizard_99</td>
-                        <td>$39,780</td>
-                        <td class="prize">$200</td>
-                    </tr>
-                    <tr>
-                        <td class="rank">#11</td>
-                        <td>CasinoLegend_X</td>
-                        <td>$35,420</td>
-                        <td class="prize">$100</td>
-                    </tr>
-                    <tr>
-                        <td class="rank">#12</td>
-                        <td>SpinMaster_2024</td>
-                        <td>$31,890</td>
-                        <td class="prize">$100</td>
-                    </tr>
-                    <tr>
-                        <td class="rank">#13</td>
-                        <td>BetBeast_Alpha</td>
-                        <td>$28,650</td>
-                        <td class="prize">$100</td>
-                    </tr>
-                    <tr>
-                        <td class="rank">#14</td>
-                        <td>JackpotHunter_7</td>
-                        <td>$25,340</td>
-                        <td class="prize">$100</td>
-                    </tr>
-                    <tr>
-                        <td class="rank">#15</td>
-                        <td>AllIn_Warrior</td>
-                        <td>$22,780</td>
-                        <td class="prize">$100</td>
-                    </tr>
+                <tbody id="leaderboard-tbody">
+                    <!-- Data will be populated by JavaScript -->
                 </tbody>
             </table>
         </div>
@@ -556,6 +467,25 @@
             return data;
         }
 
+        // Function to show empty state with dashes
+        function showEmptyState() {
+            const tbody = document.querySelector('#leaderboard-tbody');
+            tbody.innerHTML = '';
+            
+            // Show 15 rows with dashes
+            for (let i = 1; i <= 15; i++) {
+                const prize = prizeStructure[i] || '$0';
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="rank">#${i}</td>
+                    <td>----</td>
+                    <td>----</td>
+                    <td class="prize">${prize}</td>
+                `;
+                tbody.appendChild(row);
+            }
+        }
+
         // Function to fetch and update leaderboard
         async function updateLeaderboard() {
             try {
@@ -570,7 +500,8 @@
                 
                 // Check if we have any actual data rows (not just headers)
                 if (!data || data.length === 0) {
-                    console.log('No data rows found in CSV, keeping static data');
+                    console.log('No data rows found in CSV, showing empty state');
+                    showEmptyState();
                     return;
                 }
                 
@@ -581,6 +512,7 @@
                 // Verify columns exist
                 if (!data[0].hasOwnProperty(wagerColumn) || !data[0].hasOwnProperty(userColumn)) {
                     console.error('Required columns not found. Available columns:', Object.keys(data[0]));
+                    showEmptyState();
                     return;
                 }
 
@@ -588,7 +520,8 @@
                 const validData = data.filter(row => row[wagerColumn] && parseFloat(row[wagerColumn]) > 0);
                 
                 if (validData.length === 0) {
-                    console.log('No valid wager data found, keeping static data');
+                    console.log('No valid wager data found, showing empty state');
+                    showEmptyState();
                     return;
                 }
 
@@ -602,18 +535,18 @@
                 console.log('Sorted data:', validData);
 
                 // Update the table
-                const tbody = document.querySelector('tbody');
+                const tbody = document.querySelector('#leaderboard-tbody');
                 tbody.innerHTML = '';
 
-                // Take top 15 users
-                const topUsers = validData.slice(0, 15);
-                
-                if (topUsers.length > 0) {
-                    console.log('Updating leaderboard with real data');
-                    topUsers.forEach((user, index) => {
-                        const rank = index + 1;
+                // Take top 15 users or fill remaining with dashes
+                for (let i = 0; i < 15; i++) {
+                    const rank = i + 1;
+                    const prize = prizeStructure[rank] || '$0';
+                    
+                    if (i < validData.length) {
+                        // Real user data
+                        const user = validData[i];
                         const wagerAmount = parseFloat(user[wagerColumn]) || 0;
-                        const prize = prizeStructure[rank] || '$0';
                         
                         const row = document.createElement('tr');
                         row.innerHTML = `
@@ -623,14 +556,24 @@
                             <td class="prize">${prize}</td>
                         `;
                         tbody.appendChild(row);
-                    });
-                } else {
-                    console.log('No users to display, keeping static data');
+                    } else {
+                        // Empty slot with dashes
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="rank">#${rank}</td>
+                            <td>----</td>
+                            <td>----</td>
+                            <td class="prize">${prize}</td>
+                        `;
+                        tbody.appendChild(row);
+                    }
                 }
+
+                console.log('Leaderboard updated with real data and empty slots');
 
             } catch (error) {
                 console.error('Error fetching leaderboard data:', error);
-                // Keep the existing static data if API fails
+                showEmptyState();
             }
         }
 
