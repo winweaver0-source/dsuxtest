@@ -398,7 +398,7 @@
         <div class="rules-section">
             <h3 class="rules-title">Competition Rules</h3>
             <p class="rules-text">
-                To participate in this monthly leaderboard competition, you must use referral code "demisux" when signing up on their stake account. Only wagers placed during the official competition period will count towards your ranking. There is a minimum wager amount of $1 per bet. All prizes will be distributed and tipped to the winners Stake Accounts within 48 hours of the competition's end. Leaderboard updates every 5 minutes.
+                To participate in this monthly leaderboard competition, you must use referral code "demisux" when signing up on your stake account. Wager counting is based on game RTP: games with RTP of 98% or lower count 100% of wagered amount, games with RTP above 98% count 50% of wagered amount, and games with RTP of 99% or higher count 10% of wagered amount. Leaderboard updates every 5 minutes.
             </p>
         </div>
         
@@ -490,7 +490,7 @@
         async function updateLeaderboard() {
             try {
                 console.log('Fetching leaderboard data...');
-                const response = await fetch('https://app.trevor.io/share/view/30dc229a-80de-48bd-abf4-5d0206c7d508/1d/demidog_Stake_us_Wager_Race_Statistics_28_Aug_27_Sep.csv?seed=83');
+                const response = await fetch('https://docs.google.com/spreadsheets/d/17ol6q6wOo-69arxzpsZVWjcoFLkI-0CDjb7MxlRS-_U/export?format=csv&gid=2077816179');
                 const csvText = await response.text();
                 
                 console.log('CSV Response:', csvText);
@@ -505,13 +505,31 @@
                     return;
                 }
                 
-                // Look for the exact column names from the CSV structure
-                const wagerColumn = 'wagered';
-                const userColumn = 'user_name';
+                // Look for column names flexibly (Google Sheets might have different headers)
+                const headers = Object.keys(data[0]);
+                console.log('Available columns:', headers);
+                
+                const wagerColumn = headers.find(key => 
+                    key.toLowerCase().includes('wager') || 
+                    key.toLowerCase().includes('amount') ||
+                    key.toLowerCase().includes('total') ||
+                    key.toLowerCase().includes('bet') ||
+                    key.toLowerCase().includes('wagered')
+                );
+                
+                const userColumn = headers.find(key =>
+                    key.toLowerCase().includes('user') ||
+                    key.toLowerCase().includes('name') ||
+                    key.toLowerCase().includes('player') ||
+                    key.toLowerCase().includes('username')
+                );
+                
+                console.log('Found wager column:', wagerColumn);
+                console.log('Found user column:', userColumn);
                 
                 // Verify columns exist
-                if (!data[0].hasOwnProperty(wagerColumn) || !data[0].hasOwnProperty(userColumn)) {
-                    console.error('Required columns not found. Available columns:', Object.keys(data[0]));
+                if (!wagerColumn || !userColumn) {
+                    console.error('Required columns not found. Available columns:', headers);
                     showEmptyState();
                     return;
                 }
@@ -577,8 +595,8 @@
             }
         }
 
-        // Set the date we're counting down to
-        var countDownDate = new Date().getTime() + (30 * 24 * 60 * 60 * 1000);
+        // Set the date we're counting down to - October 10th, 2025
+        var countDownDate = new Date("October 10, 2025 23:59:59").getTime();
 
         // Update the count down every 1 second
         var x = setInterval(function() {
