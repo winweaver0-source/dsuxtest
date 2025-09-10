@@ -559,59 +559,74 @@
         // Function to fetch and update leaderboard
         async function updateLeaderboard() {
             try {
+                console.log('Fetching leaderboard data...');
                 const response = await fetch('https://app.trevor.io/share/view/30dc229a-80de-48bd-abf4-5d0206c7d508/1d/demidog_Stake_us_Wager_Race_Statistics_28_Aug_27_Sep.csv?seed=83');
                 const csvText = await response.text();
                 
+                console.log('CSV Response:', csvText);
+                
                 const data = parseCSV(csvText);
+                console.log('Parsed data:', data);
                 
-                // Sort by wager amount (assuming the column is named 'Wager' or similar)
-                // We'll look for common column names for wager amounts
-                const wagerColumn = Object.keys(data[0]).find(key => 
-                    key.toLowerCase().includes('wager') || 
-                    key.toLowerCase().includes('amount') ||
-                    key.toLowerCase().includes('total') ||
-                    key.toLowerCase().includes('bet')
-                );
+                // Check if we have any actual data rows (not just headers)
+                if (!data || data.length === 0) {
+                    console.log('No data rows found in CSV, keeping static data');
+                    return;
+                }
                 
-                const userColumn = Object.keys(data[0]).find(key =>
-                    key.toLowerCase().includes('user') ||
-                    key.toLowerCase().includes('name') ||
-                    key.toLowerCase().includes('player')
-                );
+                // Look for the exact column names from the CSV structure
+                const wagerColumn = 'wagered';
+                const userColumn = 'user_name';
+                
+                // Verify columns exist
+                if (!data[0].hasOwnProperty(wagerColumn) || !data[0].hasOwnProperty(userColumn)) {
+                    console.error('Required columns not found. Available columns:', Object.keys(data[0]));
+                    return;
+                }
 
-                if (!wagerColumn || !userColumn) {
-                    console.error('Could not find wager or user columns in CSV data');
+                // Filter out rows with no wager data
+                const validData = data.filter(row => row[wagerColumn] && parseFloat(row[wagerColumn]) > 0);
+                
+                if (validData.length === 0) {
+                    console.log('No valid wager data found, keeping static data');
                     return;
                 }
 
                 // Sort by wager amount (highest to lowest)
-                data.sort((a, b) => {
-                    const wagerA = parseFloat(a[wagerColumn].replace(/[$,]/g, '')) || 0;
-                    const wagerB = parseFloat(b[wagerColumn].replace(/[$,]/g, '')) || 0;
+                validData.sort((a, b) => {
+                    const wagerA = parseFloat(a[wagerColumn]) || 0;
+                    const wagerB = parseFloat(b[wagerColumn]) || 0;
                     return wagerB - wagerA;
                 });
+
+                console.log('Sorted data:', validData);
 
                 // Update the table
                 const tbody = document.querySelector('tbody');
                 tbody.innerHTML = '';
 
                 // Take top 15 users
-                const topUsers = data.slice(0, 15);
+                const topUsers = validData.slice(0, 15);
                 
-                topUsers.forEach((user, index) => {
-                    const rank = index + 1;
-                    const wagerAmount = parseFloat(user[wagerColumn].replace(/[$,]/g, '')) || 0;
-                    const prize = prizeStructure[rank] || '$0';
-                    
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td class="rank">#${rank}</td>
-                        <td>${user[userColumn]}</td>
-                        <td>${formatCurrency(wagerAmount)}</td>
-                        <td class="prize">${prize}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
+                if (topUsers.length > 0) {
+                    console.log('Updating leaderboard with real data');
+                    topUsers.forEach((user, index) => {
+                        const rank = index + 1;
+                        const wagerAmount = parseFloat(user[wagerColumn]) || 0;
+                        const prize = prizeStructure[rank] || '$0';
+                        
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td class="rank">#${rank}</td>
+                            <td>${user[userColumn] || 'Unknown User'}</td>
+                            <td>${formatCurrency(wagerAmount)}</td>
+                            <td class="prize">${prize}</td>
+                        `;
+                        tbody.appendChild(row);
+                    });
+                } else {
+                    console.log('No users to display, keeping static data');
+                }
 
             } catch (error) {
                 console.error('Error fetching leaderboard data:', error);
